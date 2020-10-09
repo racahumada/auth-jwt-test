@@ -16,7 +16,6 @@ const db = async () => {
       if (err) {
         console.error(err);
       }
-      console.log('DB Rodando');
     }
   );
 };

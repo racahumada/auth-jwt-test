@@ -53,6 +53,7 @@ server.get('/login', async (req, res) => {
 });
 
 server.use('/users', middle.authMiddle);
+server.use('/me', middle.authMiddle);
 
 server.get('/users', async (req, res) => {
   try {
@@ -61,6 +62,10 @@ server.get('/users', async (req, res) => {
   } catch (err) {
     res.send(err);
   }
+});
+//usado na verificação de token
+server.get('/me', (req, res) => {
+  res.send(req.auth);
 });
 
 server.listen(3000, () => {

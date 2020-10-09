@@ -1,8 +1,10 @@
 import express from 'express';
 import db from './config/db.js';
 import UserModel from './models/UsersModel.js';
-
+//importando funções de token e verificação
 import * as jwt from './config/jwt.js';
+//importando funções para os middlewares
+import * as middle from './middlewares/midllewares.js';
 
 const server = express();
 server.use(express.json());
@@ -17,6 +19,7 @@ server.post('/signup', async (req, res) => {
     const result = await UserModel.create(req.body);
     // user.password = undefined; Para não retornar o password como resultado
     const { password, ...user } = result.toObject();
+    //Gerando token
     const token = jwt.sign({ user: user.id });
 
     //Retornando os dados de usuario e o token para validações
@@ -27,12 +30,34 @@ server.post('/signup', async (req, res) => {
 });
 
 server.get('/login', async (req, res) => {
+  //Pegando os dados que vem do headers
+  const dataLogin = req.headers.authorization;
+  //Atribuindo as strings separadas
+  const [_hashtype, hash] = dataLogin.split(' ');
+  //Decodificando a hash e separando o username da senha
+  const [username, password] = Buffer.from(hash, 'base64')
+    .toString()
+    .split(':');
+
   try {
     const user = await UserModel.findOne({ username, password });
     if (!user) {
       return res.status(401);
     }
-    res.send(user);
+    //Gerando token ao logar
+    const token = jwt.sign({ user: user.id });
+    res.send({ user, token });
+  } catch (err) {
+    res.send(err);
+  }
+});
+
+server.use('/users', middle.authMiddle);
+
+server.get('/users', async (req, res) => {
+  try {
+    const users = await UserModel.find();
+    res.send(users);
   } catch (err) {
     res.send(err);
   }
